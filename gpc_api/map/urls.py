@@ -17,6 +17,6 @@ from django.urls import path
 from map import views
 
 urlpatterns = [
-    path('', views.home),
-    path('map/', views.map),
+    path('', views.check_health),
+    path('stores/', views.search_store),
 ]
