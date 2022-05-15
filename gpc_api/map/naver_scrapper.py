@@ -7,24 +7,24 @@ from bs4 import BeautifulSoup
 
 
 class NaverScrapper:
-    start_re = re.compile("window.__APOLLO_STATE__")
-    end_re = re.compile("window.__PLACE_STATE__")
-    store_url = "https://m.map.naver.com/search2/interestSpotMore.naver"
-    menu_url = "https://m.place.naver.com/restaurant/"
-    cate_dic = {
-        "카페": ["CAFE_COFFEE", 2500],
-        "프랜차이즈": ["DINING_FASTFOOD", 6000],
-        "분식": ["DINING_SNACK", 6000],
-        "한식": ["DINING_KOREAN", 7000],
-        "중식": ["DINING_CHINESE", 6000],
-        "일식": ["DINING_JAPANESE", 10000],
-        "양식": ["DINING_WESTERN", 10000],
-        "음식점": ["DINING", 10000],
-    }
+    def __init__(self) -> None:
+        self.start_re = re.compile("window.__APOLLO_STATE__")
+        self.end_re = re.compile("window.__PLACE_STATE__")
+        self.store_url = "https://m.map.naver.com/search2/interestSpotMore.naver"
+        self.menu_url = "https://m.place.naver.com/restaurant/"
+        self.cate_dic = {
+            "카페": ["CAFE_COFFEE", 2500],
+            "프랜차이즈": ["DINING_FASTFOOD", 6000],
+            "분식": ["DINING_SNACK", 6000],
+            "한식": ["DINING_KOREAN", 7000],
+            "중식": ["DINING_CHINESE", 6000],
+            "일식": ["DINING_JAPANESE", 10000],
+            "양식": ["DINING_WESTERN", 10000],
+            "음식점": ["DINING", 10000],
+        }
 
-    @classmethod
-    def store_search(cls, lat, lng, category):
-        catego = cls.cate_dic[category][0]
+    def store_search(self, lat, lng, category):
+        catego = self.cate_dic[category][0]
         params = (
             ("type", catego),
             ("searchCoord", f"{lng};{lat}"),
@@ -32,7 +32,7 @@ class NaverScrapper:
             ("page", "1"),
             ("displayCount", "60"),
         )
-        response = requests.get(cls.store_url, params=params)
+        response = requests.get(self.store_url, params=params)
         try:
             site_list = json.loads(response.text)["result"]["site"]["list"]
         except:
@@ -50,18 +50,16 @@ class NaverScrapper:
 
         return site_dic
 
-    @classmethod
-    def error_msg(cls, e, msg):
+    def error_msg(self, e, msg):
         err_line = "Error on line {}".format(sys.exc_info()[-1].tb_lineno)
         fin_err_msg = msg + " " + err_line + " " + type(e).__name__ + " " + str(e)
         return print(fin_err_msg)
 
     # 메뉴 가져오기 return {menu_name : price}
-    @classmethod
-    def collect_menu(cls, content_dic, base_dic, id_, cate):
+    def collect_menu(self, content_dic, base_dic, id_, cate):
         menu_dic = {}
         # 카테고리별 가격 임계치 설정.
-        threshold = cls.cate_dic[cate][1]
+        threshold = self.cate_dic[cate][1]
 
         # 배달메뉴가 있는지 확인
         if base_dic["yogiyo"] is not None:
@@ -99,11 +97,10 @@ class NaverScrapper:
         return menu_dic
 
     # 가게이름 : {{운영시간}, {리뷰수}, {별점}, {메뉴}, {id}} 반환
-    @classmethod
-    def get_menu(cls, site_dic, cate):
+    def get_menu(self, site_dic, cate):
         stores_dic = {}
         for id_, name in zip(site_dic["id"], site_dic["name"]):
-            base_url = cls.menu_url + id_ + "/menu"
+            base_url = self.menu_url + id_ + "/menu"
             response = requests.get(base_url)
             soup = BeautifulSoup(
                 response.content.decode("utf-8", "replace"), "html.parser"
@@ -124,8 +121,8 @@ class NaverScrapper:
                     break
 
             # 내가 원하는 부분을 찾아서 슬라이싱 후 json.loads를 통해 dict를 얻을 수 있다.
-            start_idx = cls.start_re.search(content).end()
-            end_idx = cls.end_re.search(content).start()
+            start_idx = self.start_re.search(content).end()
+            end_idx = self.end_re.search(content).start()
             str_dic = content[start_idx + 3 : end_idx - 12]
 
             # 가게에 대한 정보가 들어있는 dict 만들기
@@ -147,7 +144,7 @@ class NaverScrapper:
                 continue
 
             # 메뉴 가져오기
-            menu_dic = cls.collect_menu(content_dic, base_dic, id_, cate)
+            menu_dic = self.collect_menu(content_dic, base_dic, id_, cate)
 
             if len(menu_dic) < 1:
                 continue
@@ -165,12 +162,11 @@ class NaverScrapper:
 
         return stores_dic
 
-    @classmethod
-    def run(cls, lat, lng, category):
+    def run(self, lat, lng, category=None):
         store_list = []
         category = category or "음식점"
-        site_dic = NaverScrapper.store_search(lat, lng, category)
-        menu_dic = NaverScrapper.get_menu(site_dic, category)
+        site_dic = self.store_search(lat, lng, category)
+        menu_dic = self.get_menu(site_dic, category)
 
         for store, store_info in menu_dic.items():
             idx = site_dic["id"].index(store_info["id"])
