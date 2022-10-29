@@ -11,9 +11,11 @@ distlib==0.3.4
 Django==4.0.4
 djangorestframework==3.13.1
 filelock==3.7.0
+flake8==5.0.4
 identify==2.5.0
 idna==3.3
 iniconfig==1.1.1
+isort==5.10.1
 mypy-extensions==0.4.3
 nodeenv==1.6.0
 packaging==21.3

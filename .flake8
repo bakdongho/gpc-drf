@@ -1,0 +1,4 @@
+[flake8]
+import-order-style=pycharm
+max-line-length = 120
+exclude = .git, __pycache__
