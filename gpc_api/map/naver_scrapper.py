@@ -190,17 +190,16 @@ class InfoCollector:
         menu_dic.update(self.get_extra_menu(content_dic, base_dic, category))
         return menu_dic
 
+    def get_today_busuness_hour_info(self, content_dic) -> dict:
+        root_dic = content_dic["ROOT_QUERY"]
+        for key in root_dic.keys():
+            if key.startswith("restaurant") and (newBusinessHours := root_dic[key]["newBusinessHours"]):
+                return newBusinessHours[0]["businessStatusDescription"]
+
     def collect(self, content_dic, base_url, id_, cate) -> dict | None:
         base_info: dict = content_dic[f"RestaurantBase:{id_}"]  # base 정보가 담긴 dict / 이름, 리뷰수, 별점 찾기위함
         # 시간 정보가 담긴 dict / 운영시간 찾기 위함
-        # Todo. 영업 확인 로직 수정 필요
-        time_info: dict = (
-            content_dic[f"RestaurantBase:{id_}.businessHours.0"] if base_info["businessHours"] is not None else ""
-        )
-
-        # 마켓이 안열었으면 pass
-        if time_info != "" and time_info["isDayOff"]:
-            # Todo. write fail log
+        if not (time_info := self.get_today_busuness_hour_info(content_dic)) or re.search("휴무|종료", time_info["status"]):
             return
 
         # 메뉴 가져오기
@@ -208,7 +207,7 @@ class InfoCollector:
         if menu_dic := self.get_menu(content_dic, base_info, id_, cate):
             # 운영시간 / 리뷰수 / 별점 / 메뉴 / id를 market_dic에 담음
             # {메뉴:{} , 별점:int ..} 하나의 가게에 정보 담음
-            store_info["time"] = time_info["hourString"] if time_info != "" else "알 수 없음"
+            store_info["time"] = time_info["description"]
             store_info["review"] = base_info["visitorReviewsTotal"]
             store_info["star"] = base_info["visitorReviewsScore"]
             store_info["menu"] = menu_dic
