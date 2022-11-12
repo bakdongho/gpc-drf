@@ -135,13 +135,14 @@ class InfoCollector:
     def _get_threshold(self, category):
         return self.THRESHOLD_TABLE[category]
 
-    def get_delivery_menu(self, content_dic, base_dic, menu_dic, id_, category):
+    def get_delivery_menu(self, content_dic, base_dic, id_, category):
+        menu_dic = {}
         if base_dic["yogiyo"] is not None:
             deli = "yogiyo"
         elif base_dic["baemin"] is not None:
             deli = "baemin"
         else:
-            return
+            return menu_dic
 
         # 배달 메뉴가 있다면 실행
         brend = content_dic[f"$RestaurantBase:{id_}.{deli}"]
@@ -158,7 +159,12 @@ class InfoCollector:
                     if int(menu["price"]) <= self._get_threshold(category):
                         menu_dic[menu["name"]] = menu["price"]
 
-    def get_extra_menu(self, content_dic, base_dic, id_, menu_dic, category):
+        return menu_dic
+
+    def get_extra_menu(self, content_dic, base_dic, category):
+        def _get_menu(menu_ref):
+            return content_dic[menu_ref["__ref"]]
+
         def exist_number(price: str):
             return re.search(r"\D", price) is None and price != ""
 
@@ -166,26 +172,28 @@ class InfoCollector:
             return int(price) <= self._get_threshold(category)
 
         if base_dic["menus"] is None:
+            # Todo. define exception
             return
-        for idx in range(len(base_dic["menus"])):
-            menu = content_dic[f"Menu:{id_}_{str(idx)}"]
-            if exist_number(menu["price"]) and not_above_threshold(menu["price"]):
-                menu_dic[menu["name"]] = menu["price"]
+
+        return {
+            menu["name"]: menu["price"]
+            for menu in map(_get_menu, base_dic["menus"])
+            if exist_number(menu["price"]) and not_above_threshold(menu["price"])
+        }
 
     # 메뉴 가져오기 return {menu_name : price}
     def get_menu(self, content_dic, base_dic, id_, category):
-        menu_dic = {}
         # 배달메뉴가 있는지 확인
-        self.get_delivery_menu(content_dic, base_dic, menu_dic, id_, category)
+        menu_dic = self.get_delivery_menu(content_dic, base_dic, id_, category)
 
         # 이외에 메뉴가 있는지 확인
-        self.get_extra_menu(content_dic, base_dic, menu_dic, id_, category)
-
+        menu_dic.update(self.get_extra_menu(content_dic, base_dic, category))
         return menu_dic
 
     def collect(self, content_dic, base_url, id_, cate) -> dict | None:
         base_info: dict = content_dic[f"RestaurantBase:{id_}"]  # base 정보가 담긴 dict / 이름, 리뷰수, 별점 찾기위함
         # 시간 정보가 담긴 dict / 운영시간 찾기 위함
+        # Todo. 영업 확인 로직 수정 필요
         time_info: dict = (
             content_dic[f"RestaurantBase:{id_}.businessHours.0"] if base_info["businessHours"] is not None else ""
         )
