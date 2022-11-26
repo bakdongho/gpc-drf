@@ -1,10 +1,14 @@
 import pytest
-from .naver_scrapper import NaverScrapper
+
+from gpc_api.map.scrapper import NaverScrapper
+
 # Create your tests here.
+
 
 @pytest.fixture
 def scrapper():
     return NaverScrapper()
+
 
 def test_get_store(scrapper):
     # Given: 위도, 경도

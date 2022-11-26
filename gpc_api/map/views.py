@@ -1,9 +1,11 @@
-from django.http import JsonResponse, HttpResponseBadRequest
-from django.shortcuts import render
-from rest_framework.response import Response
+from django.http import JsonResponse
 from rest_framework.decorators import api_view
+from rest_framework.response import Response
+
+from gpc_api.map.scrapper import NaverScrapper
+
 from .serializers import StoreSerializer
-from .naver_scrapper import NaverScrapper
+
 
 # Create your views here.
 def check_health(request):
