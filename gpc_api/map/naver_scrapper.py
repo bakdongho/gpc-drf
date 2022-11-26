@@ -7,12 +7,19 @@ import requests
 from bs4 import BeautifulSoup
 
 
+class FailRequests(Exception):
+    pass
+
+
 class NaverScrapper:
     def __init__(self) -> None:
         self.parser = HtmlParser()
         self.collector = InfoCollector()
         self.store_url = "https://m.map.naver.com/search2/interestSpotMore.naver"
         self.menu_url = "https://m.place.naver.com/restaurant/{}/menu"
+        self.headers = {
+            "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/107.0.5304.101 Mobile/15E148 Safari/604.1",
+        }
         self.CATEGORY_TABLE = {
             "카페": "CAFE_COFFEE",
             "프랜차이즈": "DINING_FASTFOOD",
@@ -26,18 +33,22 @@ class NaverScrapper:
 
     def search_store(self, lat, lng, category):
         catego = self.CATEGORY_TABLE[category]
-        params = (
-            ("type", catego),
-            ("searchCoord", f"{lng};{lat}"),
-            ("siteSort", "1"),  # 0 관련도, 1 거리순
-            ("page", "1"),
-            ("displayCount", "60"),
+
+        response = requests.get(
+            self.store_url,
+            headers=self.headers,
+            params=(
+                ("type", catego),
+                ("searchCoord", f"{lng};{lat}"),
+                ("siteSort", "1"),  # 0 관련도, 1 거리순
+                ("page", "1"),
+                ("displayCount", "60"),
+            ),
         )
-        response = requests.get(self.store_url, params=params)
         try:
             site_list = json.loads(response.text)["result"]["site"]["list"]
         except (JSONDecodeError, KeyError):
-            return "fail"
+            raise FailRequests
         site_dic = defaultdict(list)
         for site in site_list:
             if site["menuExist"] == "1":
