@@ -16,7 +16,7 @@ identify==2.5.0
 idna==3.3
 iniconfig==1.1.1
 isort==5.10.1
-mypy-extensions==0.4.3
+mypy-extensions==1.0.0
 nodeenv==1.6.0
 packaging==21.3
 pathspec==0.9.0
