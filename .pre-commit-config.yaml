@@ -31,5 +31,20 @@ repos:
     rev: 'v1.4.1'
     hooks:
     -   id: mypy
-        args: [--strict, --ignore-missing-imports]
+        args:
+            - --strict
+            - --ignore-missing-imports
+            - --disable-error-code=misc
+            - --disable-error-code=type-arg
         language_version: python3.10
+
+-   repo: https://github.com/dosisod/refurb
+    rev: 'v1.17.0'
+    hooks:
+      - id: refurb
+        language_version: python3.10
+
+-   repo: https://github.com/asottile/pyupgrade
+    rev: v3.8.0
+    hooks:
+    -   id: pyupgrade
